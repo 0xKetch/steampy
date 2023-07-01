@@ -23,6 +23,7 @@ class LoginExecutor:
         self._assert_valid_credentials(login_response)
         self._perform_redirects(login_response.json())
         self.set_sessionid_cookies()
+        self.set_steam_login_secure_cookies()
         return self.session
 
     def _send_login_request(self) -> requests.Response:
@@ -36,15 +37,21 @@ class LoginExecutor:
         sessionid = self.session.cookies.get_dict()['sessionid']
         community_domain = SteamUrl.COMMUNITY_URL[8:]
         store_domain = SteamUrl.STORE_URL[8:]
-        community_cookie = self._create_session_id_cookie(sessionid, community_domain)
-        store_cookie = self._create_session_id_cookie(sessionid, store_domain)
+        community_cookie = self._create_cookie("sessionid", sessionid, community_domain)
+        store_cookie = self._create_cookie("sessionid", sessionid, store_domain)
         self.session.cookies.set(**community_cookie)
         self.session.cookies.set(**store_cookie)
 
+    def set_steam_login_secure_cookies(self):
+        steamLoginSecure = self.session.cookies.get_dict()['steamLoginSecure']
+        store_domain = SteamUrl.STORE_URL[8:]
+        store_cookie = self._create_cookie("steamLoginSecure", steamLoginSecure, store_domain)
+        self.session.cookies.set(**store_cookie)
+
     @staticmethod
-    def _create_session_id_cookie(sessionid: str, domain: str) -> dict:
-        return {"name": "sessionid",
-                "value": sessionid,
+    def _create_cookie(name: str, value: str, domain: str) -> dict:
+        return {"name": name,
+                "value": value,
                 "domain": domain}
 
     def _fetch_rsa_params(self, current_number_of_repetitions: int = 0) -> dict:
