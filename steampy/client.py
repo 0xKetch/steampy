@@ -416,3 +416,29 @@ class SteamClient:
             return Decimal(balance_dict[balance_dict_key]) / 100
         else:
             return balance_dict[balance_dict_key]
+
+    @login_required
+    def get_recommendations_queue(self):
+        url = SteamUrl.STORE_URL + '/explore/generatenewdiscoveryqueue/'
+        session_id = self._get_session_id()
+        headers = {'Origin': SteamUrl.STORE_URL,
+                   'Referer': SteamUrl.STORE_URL + '/explore/'}
+        params = {
+            'sessionid': session_id,
+            'queuetype': 0
+        }
+        response = self._session.post(url, headers=headers, data=params)
+        return response
+
+    @login_required
+    def watch_recommendation(self, app_id: int):
+        url = SteamUrl.STORE_URL + f'/app/{app_id}'
+        session_id = self._get_session_id()
+        headers = {'Origin': SteamUrl.STORE_URL}
+        params = {'sessionid': session_id,
+                  'appid_to_clear_from_queue': app_id,
+                  'snr': '1_5_9__1324'}
+        response = self._session.post(url, headers=headers, data=params)
+        if response.status_code != 200:
+            return response
+        return 1
